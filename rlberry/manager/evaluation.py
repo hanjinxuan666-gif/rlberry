@@ -77,9 +77,13 @@ def evaluate_agents(
     # evaluation
     #
 
-    eval_outputs = []
+    data = {}
+    id_count = {}
     for experiment_manager in experiment_manager_list:
-        logger.info(f"Evaluating {experiment_manager.agent_name}...")
+        name = experiment_manager.agent_name
+        agent_id = name + "*" * id_count.get(name, 0)
+        id_count[name] = id_count.get(name, 0) + 1
+        logger.info(f"Evaluating {name}...")
         if choose_random_agents:
             outputs = experiment_manager.eval_agents(n_simulations)
         else:
@@ -90,9 +94,9 @@ def evaluate_agents(
                 )
 
         if len(outputs) > 0:
-            eval_outputs.append(outputs)
+            data[agent_id] = outputs
 
-    if len(eval_outputs) == 0:
+    if not data:
         logger.error(
             "[evaluate_agents]: No evaluation data. Make sure ExperimentManager.fit() has been called."
         )
@@ -102,22 +106,6 @@ def evaluate_agents(
     # plot
     #
 
-    # build unique agent IDs (in case there are two agents with the same ID)
-    unique_ids = []
-    id_count = {}
-    for experiment_manager in experiment_manager_list:
-        name = experiment_manager.agent_name
-        if name not in id_count:
-            id_count[name] = 1
-        else:
-            id_count[name] += 1
-
-        unique_ids.append(name + "*" * (id_count[name] - 1))
-
-    # convert output to DataFrame
-    data = {}
-    for agent_id, out in zip(unique_ids, eval_outputs):
-        data[agent_id] = out
     output = pd.DataFrame(data)
 
     # plot
